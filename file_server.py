@@ -6,7 +6,7 @@ from html import escape
 
 # CONFIG
 PORT = 8888
-DIRECTORY = r"C:\Users\space\Desktop\shared"  # Change to your desired folder path
+DIRECTORY = "/opt/files/shared"  # Change this to your shared folder path
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -100,7 +100,7 @@ class ThemedHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         entries.sort(key=lambda a: a.lower())
         files_html = []
 
-        # Parent Directory
+        # Add parent directory link if not root
         if self.path not in ["/", ""]:
             files_html.append(
                 '<tr><td class="folder"><a href="..">⬅️ 📁 Parent Directory</a></td><td></td></tr>'
@@ -142,10 +142,14 @@ class ThemedHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             size_bytes /= 1024
         return f"{size_bytes:.1f} TB"
 
-# Start the server (bind to 0.0.0.0 to allow LAN access)
+# Allow address reuse to prevent port locking
+class ReuseTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
+
+# Start the server
 if __name__ == "__main__":
     try:
-        with socketserver.TCPServer(("0.0.0.0", PORT), ThemedHTTPRequestHandler) as httpd:
+        with ReuseTCPServer(("0.0.0.0", PORT), ThemedHTTPRequestHandler) as httpd:
             print(f"🚀 SynqVault running at http://0.0.0.0:{PORT}")
             httpd.serve_forever()
     except Exception as e:
